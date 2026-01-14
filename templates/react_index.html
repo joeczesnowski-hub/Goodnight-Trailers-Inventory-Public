@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goodnight Trailers Inventory</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+    body {
+        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) fixed;
+        min-height: 100vh;
+    }
+    .navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .search-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+    }
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .table thead th {
+        background-color: #667eea;
+        color: white;
+        border: none;
+        font-weight: 600;
+    }
+    .table thead th.financial-column {
+        background-color: #48bb78;
+    }
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .financial-cell {
+        background-color: white !important;
+    }
+    .row-number-cell {
+        border-right: 2px solid #dee2e6;
+        font-weight: 600;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5568d3 0%, #63408a 100%);
+    }
+    .section-header {
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    .table tbody tr {
+        background-color: transparent !important;
+    }
+    
+    @media print {
+    .no-print { 
+        display: none !important; 
+    }
+    
+    html, body {
+        background: white !important;
+        margin: 0;
+        padding: 0;
+    }
+
+    @page {
+        size: landscape;
+        margin: 0.3cm;
+    }
+    
+    .table-container {
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .section-header {
+        display: none;
+    }
+    
+    .table {
+        font-size: 9px;
+        width: 100%;
+        margin: 0;
+        table-layout: fixed;
+    }
+    
+    .table th, .table td {
+        padding: 2px 3px;
+        font-size: 9px;
+        line-height: 1.15;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Hide columns we don't need in print */
+    .table thead th:nth-child(1),  /* Select checkbox */
+    .table tbody td:nth-child(1),
+    .table thead th:nth-child(2),  /* FB */
+    .table tbody td:nth-child(2),
+    .table thead th:nth-child(3),  /* Row # */
+    .table tbody td:nth-child(3),
+    .table thead th:nth-child(12), /* Condition */
+    .table tbody td:nth-child(12),
+    .table thead th:nth-child(15), /* Pictures */
+    .table tbody td:nth-child(15),
+    .table thead th:nth-child(17), /* Purchase Price */
+    .table tbody td:nth-child(17),
+    .table thead th:nth-child(18), /* Profit */
+    .table tbody td:nth-child(18) {
+        display: none !important;
+    }
+
+    /* Optimized column widths - PERCENTAGES */
+    .table thead th:nth-child(4),   /* Length - was 3 */
+    .table tbody td:nth-child(4) { width: 4% !important; }
+
+    .table thead th:nth-child(5),   /* Year - was 4 */
+    .table tbody td:nth-child(5) { width: 4% !important; }
+
+    .table thead th:nth-child(6),   /* Make - was 5 */
+    .table tbody td:nth-child(6) { width: 10% !important; }
+
+    .table thead th:nth-child(7),   /* Type - was 6 */
+    .table tbody td:nth-child(7) { width: 13% !important; }
+
+    .table thead th:nth-child(8),   /* Hitch Type - was 7 */
+    .table tbody td:nth-child(8) { width: 4% !important; }
+
+    .table thead th:nth-child(9),   /* Dimensions - was 8 */
+    .table tbody td:nth-child(9) { width: 8% !important; }
+
+    .table thead th:nth-child(10),  /* Capacity - was 9 */
+    .table tbody td:nth-child(10) { width: 6% !important; }
+
+    .table thead th:nth-child(11),  /* Description */
+    .table tbody td:nth-child(11) { width: 33% !important; white-space: normal; }
+
+    .table thead th:nth-child(13),  /* VIN - was 12 */
+    .table tbody td:nth-child(13) { width: 5% !important; }
+
+    .table thead th:nth-child(14),  /* Color - was 13 */
+    .table tbody td:nth-child(14) { width: 5% !important; }
+
+    .table thead th:nth-child(16),  /* List Price */
+    .table tbody td:nth-child(16) { width: 8% !important; font-weight: bold; }
+
+    .table tbody tr,
+    .table tbody td {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .table tbody tr {
+        page-break-inside: avoid;
+    }
+    
+    .table thead {
+                display: table-header-group;
+            }
+        }
+        
+        /* VIN print display */
+        .print-only {
+            display: none;
+        }
+        
+        @media print {
+            .print-only {
+                display: inline !important;
+            }
+        }
+</style>
+</head>
+<body>
+    <body>
+    <!-- LOCAL ENVIRONMENT WARNING -->
+    {% if 'czesnowski.pythonanywhere.com' not in request.host %}
+    <div style="background: #ff0000; color: white; text-align: center; padding: 15px; font-size: 24px; font-weight: bold; position: sticky; top: 0; z-index: 9999; border-bottom: 5px solid #cc0000;">
+        ⚠️ LOCAL DEVELOPMENT - NOT PRODUCTION ⚠️
+    </div>
+    {% endif %}
+    
+    <!-- Navigation Bar -->
+<nav class="navbar navbar-dark mb-4 no-print">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1"><i class="bi bi-truck"></i> Goodnight Trailers Inventory</span>
+        <div>
+            {% if current_user.is_authenticated %}
+                <span class="text-white me-3">Welcome, {{ current_user.username }}</span>
+                {% if current_user.is_admin() %}
+                <a href="/admin/users" class="btn btn-warning btn-sm me-2"><i class="bi bi-gear"></i> Admin</a>
+                <a href="/admin/activity-report" class="btn btn-info btn-sm me-2"><i class="bi bi-clock-history"></i> Activity Report</a>
+                <a href="/admin/smtp-settings" class="btn btn-secondary btn-sm me-2"><i class="bi bi-envelope-gear"></i> SMTP Settings</a>
+                {% endif %}
+                <a href="/admin/account-settings" class="btn btn-secondary btn-sm me-2"><i class="bi bi-person-gear"></i> Account Settings</a>
+                {% if current_user.has_financial_permission() %}
+                <a href="/charts/react" class="btn btn-info btn-sm me-2"><i class="bi bi-bar-chart-fill"></i> Charts</a>
+                {% endif %}
+                <a href="/logout" class="btn btn-light btn-sm">Logout</a>
+            {% else %}
+                <a href="/login" class="btn btn-light btn-sm">Employee Login</a>
+            {% endif %}
+            <button class="btn btn-light ms-2" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        </div>
+    </div>
+</nav>
+
+    <!-- Category Navigation Tabs -->
+    <div class="container-fluid no-print" style="background: white; padding: 0;">
+        <ul class="nav nav-tabs" style="border-bottom: 2px solid #667eea; margin: 0;">
+            <li class="nav-item">
+                <a class="nav-link {% if current_category == 'trailers' %}active{% endif %}"
+                   href="/switch_category/trailers"
+                   style="{% if current_category == 'trailers' %}background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold;{% endif %}">
+                    <i class="bi bi-truck"></i> Trailers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_category == 'trucks' %}active{% endif %}"
+                   href="/switch_category/trucks"
+                   style="{% if current_category == 'trucks' %}background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold;{% endif %}">
+                    <i class="bi bi-tools"></i> Trucks
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if current_category == 'classic_cars' %}active{% endif %}"
+                   href="/switch_category/classic_cars"
+                   style="{% if current_category == 'classic_cars' %}background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold;{% endif %}">
+                    <i class="bi bi-car-front"></i> Classic Cars
+                </a>
+            </li>
+        </ul>
+    </div>
+        <div class="container-fluid no-print" style="background: #f8f9fa; padding: 0; margin-top: 10px;">
+            <ul class="nav nav-tabs" style="border-bottom: 2px solid #28a745; margin: 0;">
+                <li class="nav-item">
+                    <a class="nav-link" 
+                    href="/?view=unsold"
+                    id="unsoldTab"
+                    style="cursor: pointer;">
+                        <i class="bi bi-box-seam"></i> Unsold Items
+                    </a>
+                </li>
+                {% if current_user.is_authenticated and current_user.has_sold_permission() %}
+                <li class="nav-item">
+                    <a class="nav-link" 
+                    href="/?view=sold"
+                    id="soldTab"
+                    style="cursor: pointer;">
+                        <i class="bi bi-check2-square"></i> Sold Items
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+
+    <div class="container-fluid">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info alert-dismissible fade show no-print" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Action Buttons -->
+        {% if current_user.is_authenticated %}
+        <div class="mb-3 d-flex gap-2 flex-wrap no-print">
+            <a href="/add?category={{ current_category }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add New Item</a>
+            <form action="/import" method="post" enctype="multipart/form-data" class="d-inline-block">
+                <label for="fileUpload" class="btn btn-success mb-0">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Import Spreadsheet
+                    <input type="file" id="fileUpload" name="file" accept=".csv,.xlsx" style="display: none;" onchange="this.form.submit()">
+                </label>
+            </form>
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/export/csv"><i class="bi bi-file-earmark-text"></i> Export as CSV</a></li>
+                    <li><a class="dropdown-item" href="/export/xlsx"><i class="bi bi-file-earmark-excel"></i> Export as Excel</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header"><i class="bi bi-facebook"></i> Facebook Marketplace Export</h6></li>
+                    <li><a class="dropdown-item" href="/export/facebook"><i class="bi bi-list-ul"></i> Export Everything (Unsold)</a></li>
+                    <li><a class="dropdown-item" href="#" id="exportSelectedBtn"><i class="bi bi-check-square"></i> Export Selected</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header"><i class="bi bi-square"></i> Squarespace Export</h6></li>
+                    <li><a class="dropdown-item" href="/export/squarespace"><i class="bi bi-list-ul"></i> Export Everything (Unsold)</a></li>
+                    <li><a class="dropdown-item" href="#" id="exportSquarespaceSelectedBtn"><i class="bi bi-check-square"></i> Export Selected</a></li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- React App Container -->
+        <div id="inventory-app"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script>
+        window.userPermissions = {
+            isAuthenticated: {{ 'true' if current_user.is_authenticated else 'false' }},
+            hasFinancial: {{ 'true' if current_user.is_authenticated and current_user.has_financial_permission() else 'false' }},
+            hasSummary: {{ 'true' if current_user.is_authenticated and current_user.has_summary_permission() else 'false' }},
+            hasSold: {{ 'true' if current_user.is_authenticated and current_user.has_sold_permission() else 'false' }},
+            hasDelete: {{ 'true' if current_user.is_authenticated and current_user.has_delete_permission() else 'false' }},
+            isAdmin: {{ 'true' if current_user.is_authenticated and current_user.is_admin() else 'false' }}
+        };
+        window.currentCategory = '{{ current_category }}';
+        window.currentView = '{{ request.args.get("view", "unsold") }}';
+    </script>
+    
+    <script type="text/babel" src="/static/js/inventory-table.jsx?v=2"></script>
+    <script type="text/babel">
+        const root = ReactDOM.createRoot(document.getElementById('inventory-app'));
+        root.render(
+            <InventoryTable 
+                category={window.currentCategory} 
+                userPermissions={window.userPermissions}
+            />
+        );
+    </script>
+    
+    <script>
+    // Set active tab based on current view
+    window.addEventListener('DOMContentLoaded', function() {
+        const view = new URLSearchParams(window.location.search).get('view') || 'unsold';
+        const activeTab = view === 'sold' ? 'soldTab' : 'unsoldTab';
+        document.getElementById(activeTab).classList.add('active');
+        document.getElementById(activeTab).style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+        document.getElementById(activeTab).style.color = 'white';
+        document.getElementById(activeTab).style.fontWeight = 'bold';
+    });
+    </script>
+
+    <script>
+// Handle Export Selected button
+document.addEventListener('DOMContentLoaded', function() {
+    const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+    if (exportSelectedBtn) {
+        exportSelectedBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            // Get the InventoryTable component instance and selected IDs
+            // We'll need to expose selectedIds from the React component
+            if (window.selectedItemIds && window.selectedItemIds.size > 0) {
+                const ids = Array.from(window.selectedItemIds);
+                
+                try {
+                    const response = await fetch('/export/facebook', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: ids })
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'facebook_marketplace_export.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    } else {
+                        alert('Error exporting selected items');
+                    }
+                } catch (error) {
+                    console.error('Export error:', error);
+                    alert('Error exporting selected items');
+                }
+            } else {
+                alert('Please select items to export');
+            }
+        });
+    }
+});
+</script>
+
+<script>
+// Handle Export Selected button for Squarespace
+document.addEventListener('DOMContentLoaded', function() {
+    const exportSquarespaceSelectedBtn = document.getElementById('exportSquarespaceSelectedBtn');
+    if (exportSquarespaceSelectedBtn) {
+        exportSquarespaceSelectedBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            if (window.selectedItemIds && window.selectedItemIds.size > 0) {
+                const ids = Array.from(window.selectedItemIds);
+                
+                try {
+                    const response = await fetch('/export/squarespace', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: ids })
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'squarespace_export.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    } else {
+                        alert('Error exporting selected items');
+                    }
+                } catch (error) {
+                    console.error('Export error:', error);
+                    alert('Error exporting selected items');
+                }
+            } else {
+                alert('Please select items to export');
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>

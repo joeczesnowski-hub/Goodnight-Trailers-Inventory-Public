@@ -1,0 +1,22 @@
+# Environment variables
+.env
+
+# Database (don't sync production DB to GitHub)
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+blueprints/__pycache__/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+token.json
+inventory.db
+*.backup*
+token.json

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Charts - Inventory Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) fixed;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        .stat-card {
+            cursor: pointer;
+            transition: all 0.3s;
+            border-width: 2px !important;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .stat-card.active {
+            border-width: 3px !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">← Back to Inventory</a>
+            <span class="navbar-text text-white">
+                Category: {{ current_category|title }}
+            </span>
+        </div>
+    </nav>
+
+    <!-- Unsold Inventory Chart -->
+    <div class="chart-card">
+        <h2 class="mb-4">Unsold Inventory Analysis</h2>
+
+        <!-- Chart Type Selector -->
+        <div class="btn-group mb-3" role="group">
+            <button type="button" class="btn btn-primary" onclick="setChartType('unsold', 'bar')">Bar</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setChartType('unsold', 'line')">Line</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setChartType('unsold', 'pie')">Pie</button>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div class="chart-wrapper">
+            <canvas id="unsoldChart"></canvas>
+        </div>
+
+        <!-- Summary Stats with Toggles -->
+        <div class="row g-3 mt-4">
+            <div class="col-md-4">
+                <div class="card stat-card border-danger active" id="unsoldPurchaseCard" onclick="toggleDataSeries('unsold', 'purchase')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Total Purchase</small>
+                            <input type="checkbox" id="unsoldPurchaseCheck" checked class="form-check-input" style="width: 20px; height: 20px;">
+                        </div>
+                        <h3 class="text-danger mb-0" id="unsoldPurchaseTotal">$0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card border-primary active" id="unsoldSaleCard" onclick="toggleDataSeries('unsold', 'sale')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Total Sale Price</small>
+                            <input type="checkbox" id="unsoldSaleCheck" checked class="form-check-input" style="width: 20px; height: 20px;">
+                        </div>
+                        <h3 class="text-primary mb-0" id="unsoldSaleTotal">$0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card border-success active" id="unsoldProfitCard" onclick="toggleDataSeries('unsold', 'profit')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Total Profit</small>
+                            <input type="checkbox" id="unsoldProfitCheck" checked class="form-check-input" style="width: 20px; height: 20px;">
+                        </div>
+                        <h3 class="text-success mb-0" id="unsoldProfitTotal">$0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sold Inventory Chart -->
+    <div class="chart-card">
+        <h2 class="mb-4">Sold Inventory Analysis</h2>
+
+        <!-- Chart Type Selector -->
+        <div class="btn-group mb-3" role="group">
+            <button type="button" class="btn btn-primary" onclick="setChartType('sold', 'bar')">Bar</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setChartType('sold', 'line')">Line</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setChartType('sold', 'pie')">Pie</button>
+        </div>
+
+        <!-- Date Range Selector -->
+        <div class="row mb-3 g-3">
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" id="soldStartDate" class="form-control" onchange="loadSoldChart()">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" id="soldEndDate" class="form-control" onchange="loadSoldChart()">
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="setQuickRange('sold', 'week')">Last 7 Days</button>
+                    <button class="btn btn-outline-secondary" onclick="setQuickRange('sold', 'month')">This Month</button>
+                    <button class="btn btn-outline-secondary" onclick="setQuickRange('sold', 'quarter')">This Quarter</button>
+                    <button class="btn btn-outline-secondary" onclick="setQuickRange('sold', 'year')">This Year</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div class="chart-wrapper">
+            <canvas id="soldChart"></canvas>
+        </div>
+
+        <!-- Summary Stats with Toggles -->
+        <div class="row g-3 mt-4">
+            <div class="col-md-4">
+                <div class="card stat-card border-danger active" id="soldPurchaseCard" onclick="toggleDataSeries('sold', 'purchase')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Total Purchase</small>
+                            <input type="checkbox" id="soldPurchaseCheck" checked class="form-check-input" style="width: 20px; height: 20px;">
+                        </div>
+                        <h3 class="text-danger mb-0" id="soldPurchaseTotal">$0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card border-primary active" id="soldSaleCard" onclick="toggleDataSeries('sold', 'sale')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Total Sale Price</small>
+                            <input type="checkbox" id="soldSaleCheck" checked class="form-check-input" style="width: 20px; height: 20px;">
+                        </div>
+                        <h3 class="text-primary mb-0" id="soldSaleTotal">$0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card border-success active" id="soldProfitCard" onclick="toggleDataSeries('sold', 'profit')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Total Profit</small>
+                            <input type="checkbox" id="soldProfitCheck" checked class="form-check-input" style="width: 20px; height: 20px;">
+                        </div>
+                        <h3 class="text-success mb-0" id="soldProfitTotal">$0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart instances and state
+        let soldChart = null;
+        let unsoldChart = null;
+        let soldChartType = 'bar';
+        let unsoldChartType = 'bar';
+        let soldData = [];
+        let unsoldData = [];
+
+        // Visibility state
+        const visibility = {
+            sold: { purchase: true, sale: true, profit: true },
+            unsold: { purchase: true, sale: true, profit: true }
+        };
+
+        // Initialize dates to current month
+        function initializeDates() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            document.getElementById('soldStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('soldEndDate').value = lastDay.toISOString().split('T')[0];
+        }
+
+        // Set quick date range
+        function setQuickRange(chartId, range) {
+            const now = new Date();
+            let start, end;
+
+            switch(range) {
+                case 'week':
+                    start = new Date(now);
+                    start.setDate(now.getDate() - 7);
+                    end = now;
+                    break;
+                case 'month':
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    break;
+                case 'quarter':
+                    const quarter = Math.floor(now.getMonth() / 3);
+                    start = new Date(now.getFullYear(), quarter * 3, 1);
+                    end = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
+                    break;
+                case 'year':
+                    start = new Date(now.getFullYear(), 0, 1);
+                    end = new Date(now.getFullYear(), 11, 31);
+                    break;
+            }
+
+            if (chartId === 'sold') {
+                document.getElementById('soldStartDate').value = start.toISOString().split('T')[0];
+                document.getElementById('soldEndDate').value = end.toISOString().split('T')[0];
+                loadSoldChart();
+            }
+        }
+
+        // Toggle data series visibility
+        function toggleDataSeries(chartId, series) {
+            visibility[chartId][series] = !visibility[chartId][series];
+
+            const checkbox = document.getElementById(`${chartId}${series.charAt(0).toUpperCase() + series.slice(1)}Check`);
+            const card = document.getElementById(`${chartId}${series.charAt(0).toUpperCase() + series.slice(1)}Card`);
+
+            checkbox.checked = visibility[chartId][series];
+
+            if (visibility[chartId][series]) {
+                card.classList.add('active');
+                card.classList.remove('opacity-50');
+            } else {
+                card.classList.remove('active');
+                card.classList.add('opacity-50');
+            }
+
+            if (chartId === 'sold') {
+                updateSoldChart();
+            } else {
+                updateUnsoldChart();
+            }
+        }
+
+         // Set chart type
+        function setChartType(chartId, type) {
+            if (chartId === 'sold') {
+                soldChartType = type;
+                // Update button states - find the sold chart's button group
+                const soldButtons = document.querySelector('#soldChart').closest('.chart-card').querySelectorAll('.btn-group button');
+                soldButtons.forEach((btn, idx) => {
+                    const types = ['bar', 'line', 'pie'];
+                    if (types[idx] === type) {
+                        btn.classList.remove('btn-outline-secondary');
+                        btn.classList.add('btn-primary');
+                    } else {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-secondary');
+                    }
+                });
+                updateSoldChart();
+            } else {
+                unsoldChartType = type;
+                // Update button states - find the unsold chart's button group
+                const unsoldButtons = document.querySelector('#unsoldChart').closest('.chart-card').querySelectorAll('.btn-group button');
+                unsoldButtons.forEach((btn, idx) => {
+                    const types = ['bar', 'line', 'pie'];
+                    if (types[idx] === type) {
+                        btn.classList.remove('btn-outline-secondary');
+                        btn.classList.add('btn-primary');
+                    } else {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-secondary');
+                    }
+                });
+                updateUnsoldChart();
+            }
+        }
+
+        // Load sold chart data
+        async function loadSoldChart() {
+            const startDate = document.getElementById('soldStartDate').value;
+            const endDate = document.getElementById('soldEndDate').value;
+
+            try {
+                const response = await fetch(`/api/chart_data_range/sold?start_date=${startDate}&end_date=${endDate}`);
+                soldData = await response.json();
+                updateSoldChart();
+                updateSoldSummary();
+            } catch (error) {
+                console.error('Error loading sold chart:', error);
+            }
+        }
+
+        // Load unsold chart data
+        async function loadUnsoldChart() {
+            try {
+                const response = await fetch(`/api/chart_data_range/unsold?start_date=2020-01-01&end_date=2030-12-31`);
+                unsoldData = await response.json();
+                updateUnsoldChart();
+                updateUnsoldSummary();
+            } catch (error) {
+                console.error('Error loading unsold chart:', error);
+            }
+        }
+
+        // Update sold chart
+        function updateSoldChart() {
+            if (soldChart) {
+                soldChart.destroy();
+            }
+
+            const ctx = document.getElementById('soldChart').getContext('2d');
+            const datasets = [];
+
+            if (soldChartType === 'pie') {
+                // For pie chart, sum all data
+                const totals = {
+                    purchase: soldData.reduce((sum, item) => sum + item.purchaseTotal, 0),
+                    sale: soldData.reduce((sum, item) => sum + item.salePriceTotal, 0),
+                    profit: soldData.reduce((sum, item) => sum + item.profitTotal, 0)
+                };
+
+                const pieData = [];
+                const pieColors = [];
+                if (visibility.sold.purchase) { pieData.push(totals.purchase); pieColors.push('#ef4444'); }
+                if (visibility.sold.sale) { pieData.push(totals.sale); pieColors.push('#3b82f6'); }
+                if (visibility.sold.profit) { pieData.push(totals.profit); pieColors.push('#10b981'); }
+
+                soldChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: [
+                            visibility.sold.purchase ? 'Purchase Total' : null,
+                            visibility.sold.sale ? 'Sale Price Total' : null,
+                            visibility.sold.profit ? 'Profit Total' : null
+                        ].filter(Boolean),
+                        datasets: [{
+                            data: pieData,
+                            backgroundColor: pieColors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            } else {
+                if (visibility.sold.purchase) {
+                    datasets.push({
+                        label: 'Purchase Total',
+                        data: soldData.map(item => item.purchaseTotal),
+                        borderColor: '#ef4444',
+                        backgroundColor: soldChartType === 'bar' ? '#ef4444' : 'rgba(239, 68, 68, 0.1)',
+                        fill: soldChartType === 'line'
+                    });
+                }
+
+                if (visibility.sold.sale) {
+                    datasets.push({
+                        label: 'Sale Price Total',
+                        data: soldData.map(item => item.salePriceTotal),
+                        borderColor: '#3b82f6',
+                        backgroundColor: soldChartType === 'bar' ? '#3b82f6' : 'rgba(59, 130, 246, 0.1)',
+                        fill: soldChartType === 'line'
+                    });
+                }
+
+                if (visibility.sold.profit) {
+                    datasets.push({
+                        label: 'Profit Total',
+                        data: soldData.map(item => item.profitTotal),
+                        borderColor: '#10b981',
+                        backgroundColor: soldChartType === 'bar' ? '#10b981' : 'rgba(16, 185, 129, 0.1)',
+                        fill: soldChartType === 'line'
+                    });
+                }
+
+                soldChart = new Chart(ctx, {
+                    type: soldChartType,
+                    data: {
+                        labels: soldData.map(item => item.period),
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: value => '$' + value.toLocaleString()
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Update unsold chart
+        function updateUnsoldChart() {
+            if (unsoldChart) {
+                unsoldChart.destroy();
+            }
+
+            const ctx = document.getElementById('unsoldChart').getContext('2d');
+            const datasets = [];
+
+            if (unsoldChartType === 'pie') {
+                const totals = {
+                    purchase: unsoldData.reduce((sum, item) => sum + item.purchaseTotal, 0),
+                    sale: unsoldData.reduce((sum, item) => sum + item.salePriceTotal, 0),
+                    profit: unsoldData.reduce((sum, item) => sum + item.profitTotal, 0)
+                };
+
+                const pieData = [];
+                const pieColors = [];
+                if (visibility.unsold.purchase) { pieData.push(totals.purchase); pieColors.push('#ef4444'); }
+                if (visibility.unsold.sale) { pieData.push(totals.sale); pieColors.push('#3b82f6'); }
+                if (visibility.unsold.profit) { pieData.push(totals.profit); pieColors.push('#10b981'); }
+
+                unsoldChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: [
+                            visibility.unsold.purchase ? 'Purchase Total' : null,
+                            visibility.unsold.sale ? 'Sale Price Total' : null,
+                            visibility.unsold.profit ? 'Profit Total' : null
+                        ].filter(Boolean),
+                        datasets: [{
+                            data: pieData,
+                            backgroundColor: pieColors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            } else {
+                if (visibility.unsold.purchase) {
+                    datasets.push({
+                        label: 'Purchase Total',
+                        data: unsoldData.map(item => item.purchaseTotal),
+                        borderColor: '#ef4444',
+                        backgroundColor: unsoldChartType === 'bar' ? '#ef4444' : 'rgba(239, 68, 68, 0.1)',
+                        fill: unsoldChartType === 'line'
+                    });
+                }
+
+                if (visibility.unsold.sale) {
+                    datasets.push({
+                        label: 'Sale Price Total',
+                        data: unsoldData.map(item => item.salePriceTotal),
+                        borderColor: '#3b82f6',
+                        backgroundColor: unsoldChartType === 'bar' ? '#3b82f6' : 'rgba(59, 130, 246, 0.1)',
+                        fill: unsoldChartType === 'line'
+                    });
+                }
+
+                if (visibility.unsold.profit) {
+                    datasets.push({
+                        label: 'Profit Total',
+                        data: unsoldData.map(item => item.profitTotal),
+                        borderColor: '#10b981',
+                        backgroundColor: unsoldChartType === 'bar' ? '#10b981' : 'rgba(16, 185, 129, 0.1)',
+                        fill: unsoldChartType === 'line'
+                    });
+                }
+
+                unsoldChart = new Chart(ctx, {
+                    type: unsoldChartType,
+                    data: {
+                        labels: unsoldData.map(item => item.period),
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: value => '$' + value.toLocaleString()
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Update summaries
+        function updateSoldSummary() {
+            const totals = {
+                purchase: soldData.reduce((sum, item) => sum + item.purchaseTotal, 0),
+                sale: soldData.reduce((sum, item) => sum + item.salePriceTotal, 0),
+                profit: soldData.reduce((sum, item) => sum + item.profitTotal, 0)
+            };
+
+            document.getElementById('soldPurchaseTotal').textContent = '$' + totals.purchase.toLocaleString();
+            document.getElementById('soldSaleTotal').textContent = '$' + totals.sale.toLocaleString();
+            document.getElementById('soldProfitTotal').textContent = '$' + totals.profit.toLocaleString();
+        }
+
+        function updateUnsoldSummary() {
+            const totals = {
+                purchase: unsoldData.reduce((sum, item) => sum + item.purchaseTotal, 0),
+                sale: unsoldData.reduce((sum, item) => sum + item.salePriceTotal, 0),
+                profit: unsoldData.reduce((sum, item) => sum + item.profitTotal, 0)
+            };
+
+            document.getElementById('unsoldPurchaseTotal').textContent = '$' + totals.purchase.toLocaleString();
+            document.getElementById('unsoldSaleTotal').textContent = '$' + totals.sale.toLocaleString();
+            document.getElementById('unsoldProfitTotal').textContent = '$' + totals.profit.toLocaleString();
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeDates();
+            loadSoldChart();
+            loadUnsoldChart();
+        });
+    </script>
+</body>
+</html>
